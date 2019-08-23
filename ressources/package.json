@@ -1,6 +1,6 @@
 {
   "name": "generate-service-files-for-thingies",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Small cli which generates the appropriate service files for our service thingies.",
   "main": "index.js",
   "scripts": {

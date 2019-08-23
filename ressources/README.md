@@ -1,12 +1,12 @@
-# generate-nginx-config-for-thingies - Small cli which generates the appropriate nginx configuration files which will then later reside in /etc/nginx/sites-enabled directory.
+# generate-service-files-for-thingies - Small cli which generates the appropriate service files for systemd.
 
 # Why?
 The toolset for the machine thingy requires such a tool.
 
 # What?
-generate-nginx-config-for-thingies - which generates the appropriate nginx configuration files which will then later reside in /etc/nginx/sites-enabled directory. 
+generate-service-files-for-thingies - which generates the appropriate service and socket files for the service thingies on a machine. 
 
-Made for the machine thingy toolset to have the appropriate nginx configuration files available.  
+Made for the machine thingy toolset to have the appropriate service files available.  
 
 # How?
 Requirements
@@ -18,23 +18,23 @@ Installation
 
 Current git version
 ``` sh
-$ npm install git+https://github.com/JhonnyJason/generate-nginx-config-for-thingies-output.git
+$ npm install git+https://github.com/JhonnyJason/generate-service-files-for-thingies-output.git
 ```
 Npm Registry
 ``` sh
-$ npm install generate-nginx-config-for-thingies
+$ npm install generate-service-files-for-thingies
 ```
 
 Usage
 -----
-Just call the script and prive an first argument being the path to the machine-config.js file.
+Just call the script and provide an first argument being the path to the machine-config.js file.
 The second argument would be the directory where we should store the generated files.
 
 ```
-$ generate-nginx-config-for-thingies --help
+$ generate-service-files-for-thingies --help
 
   Usage
-      $ generate-nginx-config-for-thingies <arg1> <arg2>
+      $ generate-service-files-for-thingies <arg1> <arg2>
     
   Options
       required:
@@ -47,7 +47,7 @@ $ generate-nginx-config-for-thingies --help
       The flags will overwrite the flagless argument.
 
   Examples
-      $ generate-nginx-config-for-thingies  machine-config.js ../sites-enabled
+      $ generate-service-files-for-thingies  machine-config.js ../systemd-files
       ...
 
 ```
@@ -59,33 +59,33 @@ To be interpreted correctly the machine-config file must meet following requirem
 
 - hold an array `thingies`
 - each thingy may have:
-    - `homeUser` - required - used for naming
-    - `type` - processed are "service" or "website"
-    - `dnsNames` - optional - sometimes very reasonable^^
-    - `socket` - optional - use proxy_pass to unix-socket
-    - `outsidePort` - nginx listens on this port then default is port 80
-    - `port` - optional(required if we donot use a unix-socket) - proxy_pass to localhost:port
-
+    - `homeUser` - required - used for naming and is part of the path
+    - `repository` - required - is part of the path
+    - `type` - processed exclsively "service"
+    - `socket` - optional - will also create .socket file and set the appropriate environment variable 
+    - `port` - optional(required if we donot use a socket) - sets the environment variable
+    - `oneshot` - optional - indicates if the service is of type oneshot
 ```javascript
 module.exports = {
     thingies = [
         {
             homeUser: "citysearch-socket",
+            repository: "citysearch-on-socket",
             type:"service",
-            socket: true,
-            dnsNames: ["citysearch.weblenny.at"],
-            outsidePort: 65531
+            socket: true
         },
         {
-            homeUser: "weblenny-homepage",
-            type:"website",
-            dnsNames: ["www.weblenny.at", "weblenny.at"]
+            homeUser: "webhook-handler",
+            repository: "webhook-handler-repository",
+            type:"service",
+            socket: true,
+            oneshot: true,
         },
         {
             homeUser: "citysearch",
+            repository: "citysearch-repository",
             type:"service",
-            port: "3002",
-            dnsNames: ["citysearch.weblenny.at"]
+            port: "3002"
         },
         ...
     ]
@@ -97,50 +97,84 @@ module.exports = {
 Result
 -----
 Produced Config Files:
-- File: citysearch-socket
+- File: citysearch-socket.service
 ```
-server {
-    listen 65531;
+[Unit]
+Description=A thingy service in it's thingy ecosystem :-)
 
-    server_name citysearch.weblenny.at;
+[Service]
+User=citysearch-socket
+Group=citysearch-socket
 
-    location / {
-        proxy_pass http://unix:/run/citysearch-socket.sk;
-    }
+ExecStart=/usr/bin/node /home/citysearch-socket/citysearch-on-socket/service.js
+WorkingDirectory=/home/citysearch-socket/citysearch-on-socket
 
-}
-```
+Environment=SOCKETMODE=true
 
-- File: weblenny-homepage
-```
-server {
-    listen 80;
-    listen [::]:80;
+Restart=always
 
-    server_name www.weblenny.at weblenny.at;
-
-    location / {
-        root /srv/http/weblenny-homepage;
-        index index.html;
-    }
-
-}
+[Install]
+WantedBy=multi-user.target
 ```
 
-- File: citysearch
+- File: citysearch-socket.socket
 ```
-server {
-    listen 80;
-    listen [::]:80;
+[Socket]
+ListenStream=/run/citysearch-socket.sk
 
-    server_name citysearch.weblenny.at;
-
-    location / {
-        proxy_pass http://localhost:3002;
-    }
-
-}
+[Install]
+WantedBy=sockets.target
 ```
+
+- File: webhook-handler.service
+```
+[Unit]
+Description=A thingy service in it's thingy ecosystem :-)
+
+[Service]
+User=webhook-handler
+Group=webhook-handler
+
+ExecStart=/usr/bin/node /home/webhook-handler/webhook-handler-repository/service.js
+WorkingDirectory=/home/webhook-handler/webhook-handler-repository
+
+Environment=SOCKETMODE=true
+
+Type=oneshot
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
+```
+
+- File: webhook-handler.socket
+```
+[Socket]
+ListenStream=/run/webhook-handler.sk
+
+[Install]
+WantedBy=sockets.target
+```
+- File: citysearch.service
+```
+[Unit]
+Description=A thingy service in it's thingy ecosystem :-)
+
+[Service]
+User=citysearch
+Group=citysearch
+
+ExecStart=/usr/bin/node /home/citysearch/citysearch-repository/service.js
+WorkingDirectory=/home/citysearch/citysearch-repository
+
+Environment=PORT=3002
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
 - and the others^^
 ---
 
