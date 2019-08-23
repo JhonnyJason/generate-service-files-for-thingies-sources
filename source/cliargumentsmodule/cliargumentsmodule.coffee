@@ -22,20 +22,19 @@ getHelpText = ->
     log "getHelpText"
     return """
         Usage
-            $ generate-nginx-config-for-thingies <arg1> <arg2>
+            $ generate-service-files-for-thingies <arg1> <arg2>
     
         Options
-            required:
             arg1, --machine-config <machine-config>, -c <machine-config>
-                path to file which if the machine-config
+                path to file which is the machine-config
             arg2, --output-directory <path/to/dir>, -o <path/to/dir>
-                path of directory where the generated config files should be stored
+                path of directory where the generated service files should be stored
             
         TO NOTE:
             The flags will overwrite the flagless argument.
 
         Examples
-            $ generate-nginx-config-for-thingies  machine-config.js ../sites-enabled
+            $ generate-service-files-for-thingies  machine-config.js ../systemd-files
             ...
     """
 getOptions = ->
@@ -72,12 +71,12 @@ throwErrorOnUsageFail = (extract) ->
     if !extract.machineConfig
         throw "Usage error: obligatory option machineConfig was not provided!"
     if !extract.outputDirectory
-        throw "Usage error: obligatory option keysDirectory was not provided!"
+        throw "Usage error: obligatory option outputDirectory was not provided!"
     
     if !(typeof extract.machineConfig == "string")
         throw "Usage error: option machineConfig was provided in an unexpected way!"
     if !(typeof extract.outputDirectory == "string")
-        throw "Usage error: option keysDirectory was provided in an unexpected way!"
+        throw "Usage error: option outputDirectory was provided in an unexpected way!"
     
 #endregion
 

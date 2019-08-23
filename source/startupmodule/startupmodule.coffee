@@ -12,14 +12,14 @@ log = (arg) ->
 #region internal variables
 errLog = (arg) -> console.log(c.red(arg))
 successLog = (arg) -> console.log(c.green(arg))
-genconfigProcess = null
+genServiceFilesProcess = null
 cliArguments = null
 #endregion
 
 ##initialization function  -> is automatically being called!  ONLY RELY ON DOM AND VARIABLES!! NO PLUGINS NO OHTER INITIALIZATIONS!!
 startupmodule.initialize = () ->
     log "startupmodule.initialize"
-    genconfigProcess = allModules.genconfigprocessmodule
+    genServiceFilesProcess = allModules.genservicefilesprocessmodule
     cliArguments = allModules.cliargumentsmodule
 
 #region internal functions
@@ -32,7 +32,7 @@ startupmodule.cliStartup = ->
     try
         e = cliArguments.extractArguments()
         # console.log(chalk.yellow("caught arguments are: " + args._))
-        done = await genconfigProcess.execute(e.machineConfig, e.outputDirectory)
+        done = await genServiceFilesProcess.execute(e.machineConfig, e.outputDirectory)
         if done then successLog 'All done!'
     catch err
         errLog "Error!"

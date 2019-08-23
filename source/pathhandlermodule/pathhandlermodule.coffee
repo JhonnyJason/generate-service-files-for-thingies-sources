@@ -56,9 +56,13 @@ pathhandlermodule.setConfigFilePath = (configPath) ->
 
 pathhandlermodule.getConfigRequirePath = -> pathhandlermodule.configPath
 
-pathhandlermodule.getConfigOutputPath = (name) ->
-    log "pathhandlermodule.getConfigOutputPath"
-    return pathModule.resolve(pathhandlermodule.outputDir, name)
+pathhandlermodule.getSocketOutputPath = (name) ->
+    log "pathhandlermodule.getSocketOutputPath"
+    return pathModule.resolve(pathhandlermodule.outputDir, name + ".socket")
+
+pathhandlermodule.getServiceOutputPath = (name) ->
+    log "pathhandlermodule.getServiceOutputPath"
+    return pathModule.resolve(pathhandlermodule.outputDir, name + ".service")
 #endregion
 
 module.exports = pathhandlermodule
