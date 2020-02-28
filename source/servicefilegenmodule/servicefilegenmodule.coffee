@@ -44,6 +44,14 @@ generateExecutionLine = (thingy) ->
     result += "WorkingDirectory=/home/" + thingy.homeUser + "/" + thingy.repository + "\n"
     return result
 
+generateInstallerExecutionLine = (thingy) ->
+    log "generateInstallerExecutionLine"
+    result = ""
+    result += "ExecStart=/usr/bin/node "
+    result += "/root/" + thingy.repository + "/installer.js update\n"
+    result += "WorkingDirectory=/root/" + thingy.repository + "\n"
+    return result
+
 generateEnvironmentLine = (thingy) ->
     log "generateEnvironmentLine"
     result = ""
@@ -63,6 +71,23 @@ generateControlLine = (thingy) ->
     else
         result += "Restart=always\n"
     return result
+
+generateInstallerServiceFile = (thingy) ->
+    log "generateInstallerServiceFile"
+    if !(thingy.homeUser == "root") then throw new Error("Installer homeUser is not root!")
+    if !thingy.repository then throw new Error("Installer has no repository defined!")
+    thingy.oneshot = true
+    fileContent = "[Unit]\n"
+    fileContent += generateDescriptionLine(thingy) + "\n"
+    fileContent += "[Service]\n"
+    fileContent += generatePermissionLine(thingy) + "\n"
+    fileContent += generateInstallerExecutionLine(thingy) + "\n"
+    fileContent += generateControlLine(thingy) + "\n"
+    fileContent += "[Install]\n"
+    fileContent += "WantedBy=multi-user.target\n"
+    filePath = pathHandler.getServiceOutputPath("installer")
+    await fs.writeFile(filePath, fileContent)
+    return
 
 generateServiceFile = (thingy) ->
     log "generateServiceFile"
@@ -96,6 +121,7 @@ generateSocketFile = (thingy) ->
 #region exposed functions
 servicefilegenmodule.generateForThingy = (thingy) ->
     log "servicefilegenmodule.generateForThingy"
+    if thingy.type == "installer" then return await generateInstallerServiceFile(thingy)
     # log "\n" + JSON.stringify(thingy, null, 2)
     return if thingy.type != "service"
     try
