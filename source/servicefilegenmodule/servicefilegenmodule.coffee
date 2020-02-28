@@ -87,6 +87,7 @@ generateInstallerServiceFile = (thingy) ->
     fileContent += "WantedBy=multi-user.target\n"
     filePath = pathHandler.getServiceOutputPath("installer")
     await fs.writeFile(filePath, fileContent)
+    successLog "installer"  + " - service files generated"
     return
 
 generateServiceFile = (thingy) ->
